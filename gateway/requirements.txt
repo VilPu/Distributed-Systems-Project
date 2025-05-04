@@ -1,0 +1,7 @@
+fastapi
+pydantic
+grpcio-tools
+grpcio
+uvicorn
+protobuf==6.30.0
+googleapis-common-protos
