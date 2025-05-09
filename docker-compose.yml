@@ -1,0 +1,13 @@
+name: ds
+
+services:
+  sensor-manager:
+    build: ./sensor_manager
+    ports:
+      - "5050:5050"
+    networks:
+      - backend
+      
+networks:
+  frontend:
+  backend:
