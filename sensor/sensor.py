@@ -23,7 +23,6 @@ if __name__ == "__main__":
             response = stub.PushReading(sensors_pb2.SensorReading(sensor_id=f"{sensor_id}", reading_type="timeseries", reading_value=random.random() * 40, timestamp=timestamp))
             trimmed_status = str.replace(response.status, "\n", "")
             logging.info(f"Data sent [{trimmed_status}]")
-            stub.ListSensors(sensors_pb2.google_dot_protobuf_dot_empty__pb2.Empty())
             time.sleep(random.random() * 15) # random 15 sec interval between readings
         except Exception as error:
             logging.error(f"Connection failed ({type(error).__name__})") # {type(error).__name__}
