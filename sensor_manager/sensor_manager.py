@@ -27,7 +27,7 @@ def save_reading(storage_service_ip, sensor: Sensor):
             response = stub.SaveReading(SensorReading)
     except Exception as error:
         logging.error(f"{sensor.sensor_id}: failed to save reading ({type(error).__name__})")
-    if response == None:
+    if response is None:
         return False
     return response.status == "200"
 
@@ -49,6 +49,10 @@ class SensorManager():
     def GetSensorData(self, request, context):
         logging.info(f"Data requested from {request.sensor_id}")
         latest_reading = self.sensors.get(request.sensor_id)
+        if latest_reading is None:
+            context.set_code(grpc.StatusCode.NOT_FOUND)
+            context.set_details(f"Sensor with id: {request.sensor_id} not found")
+            return sensors_pb2.SensorReading()
         SensorReading = sensors_pb2.SensorReading()
         SensorReading.sensor_id=latest_reading.sensor_id
         SensorReading.reading_type=latest_reading.reading_type
