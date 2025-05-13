@@ -54,6 +54,7 @@ class SensorManager():
         SensorReading.reading_type=latest_reading.reading_type
         SensorReading.reading_value=latest_reading.reading_value
         SensorReading.timestamp=latest_reading.timestamp
+        logging.info(f"{latest_reading.sensor_id} returned reading: ({latest_reading.reading_type}, {latest_reading.reading_value})")
         return SensorReading
 
     def ListSensors(self, request, context):
