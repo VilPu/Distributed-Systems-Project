@@ -1,13 +1,24 @@
 name: ds
 
 services:
+  gateway:
+    build: ./gateway
+    working_dir: /gateway
+    ports:
+      - "9000:9000"
+    depends_on:
+      - sensor-manager
   sensor-manager:
     build: ./sensor_manager
     ports:
       - "5050:5050"
-    networks:
-      - backend
-      
-networks:
-  frontend:
-  backend:
+  sensor-1:
+    build: ./sensor
+    depends_on:
+      sensor-manager:
+        condition: service_started
+  sensor-2:
+    build: ./sensor
+    depends_on:
+      sensor-manager:
+        condition: service_started
