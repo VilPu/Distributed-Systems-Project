@@ -20,9 +20,11 @@ if __name__ == "__main__":
         try: 
             timestamp = str(int(time.time()))
             stub = sensors_pb2_grpc.SensorManagerStub(channel)
-            response = stub.PushReading(sensors_pb2.SensorReading(sensor_id=f"{sensor_id}", reading_type="timeseries", reading_value=random.random() * 40, timestamp=timestamp))
+            reading_type = "timeseries"
+            reading_value = random.random() * 40
+            response = stub.PushReading(sensors_pb2.SensorReading(sensor_id=sensor_id, reading_type=reading_type, reading_value=reading_value, timestamp=timestamp))
             trimmed_status = str.replace(response.status, "\n", "")
-            logging.info(f"Data sent [{trimmed_status}]")
+            logging.info(f"Data sent [{trimmed_status}]: {reading_type} - {round(reading_value, 2)}")
             time.sleep(random.random() * 15) # random 15 sec interval between readings
         except Exception as error:
             logging.error(f"Connection failed ({type(error).__name__})") # {type(error).__name__}

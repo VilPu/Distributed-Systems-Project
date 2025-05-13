@@ -37,7 +37,7 @@ class SensorManager():
 
     def PushReading(self, request, context):
         received = Sensor(request.sensor_id, request.reading_type, request.reading_value, request.timestamp)
-        logging.info(f"{received.sensor_id}: data received")
+        logging.info(f"{received.sensor_id}: data received ({received.reading_type} {received.reading_value} @ {received.timestamp})")
         with lock:
             self.sensors.update({received.sensor_id: received})
         if save_reading(self.storage_service_ip, received): # if persisted
@@ -45,6 +45,7 @@ class SensorManager():
         return sensors_pb2.Response(status="202") # only in memory
 
     def GetSensorData(self, request, context):
+        logging.info(f"Data requested from {request.sensor_id}")
         latest_reading = self.sensors.get(request.sensor_id)
         SensorReading = sensors_pb2.SensorReading()
         SensorReading.sensor_id=latest_reading.sensor_id
