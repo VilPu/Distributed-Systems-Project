@@ -27,6 +27,8 @@ def save_reading(storage_service_ip, sensor: Sensor):
             response = stub.SaveReading(SensorReading)
     except Exception as error:
         logging.error(f"{sensor.sensor_id}: failed to save reading ({type(error).__name__})")
+    if response == None:
+        return False
     return response.status == "200"
 
 
