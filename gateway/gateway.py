@@ -1,5 +1,6 @@
 import os
 from fastapi import FastAPI
+from grpc import RpcError, StatusCode
 from pydantic import BaseModel
 from typing import List
 from google.protobuf import empty_pb2
@@ -41,15 +42,18 @@ else:
 @app.get("/sensors/{sensor_id}", response_model=SensorReadingOut)
 def get_sensor(sensor_id: str):
     request = sensors_pb2.SensorRequest(sensor_id=sensor_id)
-    response = sensors_stub.GetSensorData(request)
-    if not response.sensor_id:
-        raise HTTPException(status_code=404, detail=f"Sensor with id: {sensor_id} not found")
-    return {
-        "sensor_id": response.sensor_id,
-        "reading_type": response.reading_type,
-        "reading_value": response.reading_value,
-        "timestamp": response.timestamp
-    }
+    try:
+        response = sensors_stub.GetSensorData(request)
+        return {
+            "sensor_id": response.sensor_id,
+            "reading_type": response.reading_type,
+            "reading_value": response.reading_value,
+            "timestamp": response.timestamp
+        }
+    except RpcError as error:
+        if error.code() == StatusCode.NOT_FOUND:
+            raise HTTPException(status_code=404, detail=str(error.details()))
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/sensors", response_model=SensorListOut)
 def get_sensors():
@@ -71,13 +75,15 @@ def get_alerts():
 @app.get("/history/{sensor_id}",response_model=SensorHistoryOut)
 def get_history(sensor_id: str):
     request = sensors_pb2.SensorRequest(sensor_id=sensor_id)
-    response = storage_stub.GetHistory(request)
-    if not response.history:
-        raise HTTPException(status_code=404, detail=f"Sensor with id: {sensor_id} not found")
-    return {
-        "history": [
-            f"{history_entry.sensor_id}: {history_entry.reading_type}={history_entry.reading_value} at {history_entry.timestamp}"
-            for history_entry in response.history
-        ]
-    }
-
+    try:
+        response = storage_stub.GetHistory(request)
+        return {
+            "history": [
+                f"{history_entry.sensor_id}: {history_entry.reading_type}={history_entry.reading_value} at {history_entry.timestamp}"
+                for history_entry in response.history
+            ]
+        }
+    except RpcError as error:
+        if error.code() == StatusCode.NOT_FOUND:
+            raise HTTPException(status_code=404, detail=str(error.details()))
+        raise HTTPException(status_code=500, detail="Internal Server Error")
