@@ -31,10 +31,32 @@ def save_reading(storage_service_ip, sensor: Sensor):
         return False
     return response.status == "200"
 
+def check_reading(alert_service_ip, sensor: Sensor):
+    try:
+        with grpc.insecure_channel(alert_service_ip + ":5052") as channel:
+            stub = sensors_pb2_grpc.AlertServiceStub(channel)
+
+            SensorReading = sensors_pb2.SensorReading()
+            SensorReading.sensor_id=sensor.sensor_id,
+            SensorReading.reading_type=sensor.reading_type,
+            SensorReading.reading_value=sensor.reading_value,
+            SensorReading.timestamp=sensor.timestamp
+            
+            response = stub.CheckAlert(SensorReading)
+            
+    except Exception as error:
+        logging.error(f"{sensor.sensor_id}: failed to save reading ({type(error).__name__})")
+
+    if response is None:
+        return
+    if response.triggered:
+        logging.warning(f"{sensor.sensor_id}: ALERT TRIGGERED ({response.alert_message})")
+    return
 
 class SensorManager():
     
     storage_service_ip = os.environ.get("STORAGE_SERVICE_IP", "127.0.0.1")
+    alert_service_ip = os.environ.get("ASIP", "127.0.0.1")
     sensors: dict[str, Sensor] = {}
 
     def PushReading(self, request, context):
@@ -44,6 +66,7 @@ class SensorManager():
             self.sensors.update({received.sensor_id: received})
         if save_reading(self.storage_service_ip, received): # if persisted
             return sensors_pb2.Response(status="200")
+        check_reading(self.alert_service_ip, received)
         return sensors_pb2.Response(status="202") # only in memory
 
     def GetSensorData(self, request, context):
