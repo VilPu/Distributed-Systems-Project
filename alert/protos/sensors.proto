@@ -1,0 +1,71 @@
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+package sensors;
+
+// services
+
+/*
+GetSensorData = Get data from specific sensor with id
+ListSensors = Get list of all sensors
+PushReading = Push sensor reading from sensor to manager
+ */
+service SensorManager {
+  rpc GetSensorData(SensorRequest) returns (SensorReading);
+  rpc ListSensors(google.protobuf.Empty) returns (SensorsList);
+  rpc PushReading(SensorReading) returns (Response);
+}
+
+/*
+SaveReading = Save sensor reading to storage
+GetHistory = Get sensors history via sensor_id
+ */
+service StorageService {
+  rpc SaveReading(SensorReading) returns (Response);
+  rpc GetHistory(SensorRequest) returns (SensorHistory);
+}
+
+/*
+CheckAlert = Check if sensor reading triggers alert (e.g. too high temperature)
+GetAlerts = Get all alerts
+ */
+service AlertService {
+  rpc CheckAlert(SensorReading) returns (AlertStatus);
+  rpc GetAlerts(google.protobuf.Empty) returns (AlertList);
+}
+
+// message formats
+
+message SensorRequest {
+  string sensor_id = 1;
+}
+
+message SensorReading {
+  string sensor_id = 1;
+  string reading_type = 2;
+  float reading_value = 3;
+  string timestamp = 4;
+}
+
+// repeats SensorReading
+message SensorHistory {
+  repeated SensorReading history = 1;
+}
+
+// repeats SensorRequests
+message SensorsList {
+  repeated string sensor_ids = 1;
+}
+
+message AlertStatus {
+  bool triggered = 1;
+  string alert_message = 2;
+  string timestamp = 3;
+}
+
+message AlertList {
+  repeated AlertStatus alerts = 1;
+}
+
+message Response {
+  string status = 1;
+}
