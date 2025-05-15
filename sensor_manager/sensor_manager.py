@@ -18,12 +18,12 @@ def save_reading(storage_service_ip, sensor: Sensor):
         with grpc.insecure_channel(storage_service_ip + ":5051") as channel:
             stub = sensors_pb2_grpc.StorageServiceStub(channel)
 
-            SensorReading = sensors_pb2.SensorReading()
-            SensorReading.sensor_id=sensor.sensor_id,
-            SensorReading.reading_type=sensor.reading_type,
-            SensorReading.reading_value=sensor.reading_value,
-            SensorReading.timestamp=sensor.timestamp
-            
+            SensorReading = sensors_pb2.SensorReading(
+                sensor_id=sensor.sensor_id,
+                reading_type=sensor.reading_type,
+                reading_value=sensor.reading_value,
+                timestamp=sensor.timestamp
+            )            
             response = stub.SaveReading(SensorReading)
     except Exception as error:
         logging.error(f"{sensor.sensor_id}: failed to save reading ({type(error).__name__})")
@@ -38,21 +38,23 @@ def check_reading(alert_service_ip, sensor: Sensor):
         with grpc.insecure_channel(alert_service_ip + ":5052") as channel:
             stub = sensors_pb2_grpc.AlertServiceStub(channel)
 
-            SensorReading = sensors_pb2.SensorReading()
-            SensorReading.sensor_id=sensor.sensor_id,
-            SensorReading.reading_type=sensor.reading_type,
-            SensorReading.reading_value=sensor.reading_value,
-            SensorReading.timestamp=sensor.timestamp
-            
+            SensorReading = sensors_pb2.SensorReading(
+                sensor_id=sensor.sensor_id, 
+                reading_type=sensor.reading_type, 
+                reading_value=sensor.reading_value, 
+                timestamp=sensor.timestamp
+            )
             response = stub.CheckAlert(SensorReading)
             
     except Exception as error:
-        logging.error(f"{sensor.sensor_id}: failed to save reading ({type(error).__name__})")
+        logging.error(f"{sensor.sensor_id}: failed to check reading ({type(error).__name__})")
 
     if response is None:
         return
     if response.triggered:
         logging.warning(f"{sensor.sensor_id}: ALERT TRIGGERED ({response.alert_message})")
+        return
+    logging.info(f"{sensor.sensor_id}: {response.alert_message}")
     return
 
 class SensorManager():
