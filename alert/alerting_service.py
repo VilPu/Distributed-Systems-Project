@@ -28,6 +28,8 @@ class AlertService():
 
         threshold = THRESHOLDS.get(reading_type)
 
+        logging.info(f"Checking {sensor_id}  reading with value {value} (threshold: {threshold})")
+
         if threshold is not None and value > threshold:
             active_alerts[sensor_id] = {
                 "triggered": True,
