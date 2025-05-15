@@ -32,6 +32,7 @@ def save_reading(storage_service_ip, sensor: Sensor):
     return response.status == "200"
 
 def check_reading(alert_service_ip, sensor: Sensor):
+    logging.info(f"{sensor.sensor_id}: checking reading...")
     try:
         with grpc.insecure_channel(alert_service_ip + ":5052") as channel:
             stub = sensors_pb2_grpc.AlertServiceStub(channel)
