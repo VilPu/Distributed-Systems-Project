@@ -57,9 +57,9 @@ class AlertService():
         alerts = sensors_pb2.AlertList()
         for sid, data in active_alerts.items():
             alerts.alerts.append(sensors_pb2.AlertStatus(
-                triggered = data.triggered,
-                alert_message = data.alert_message,
-                timestamp = data.timestamp
+                triggered = data["triggered"],
+                alert_message = data["alert_message"],
+                timestamp = data["timestamp"]
             ))
         return alerts
 
