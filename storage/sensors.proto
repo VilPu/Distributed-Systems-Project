@@ -1,0 +1,33 @@
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+package sensors;
+
+/*
+SaveReading = Save sensor reading to storage
+GetHistory = Get sensors history via sensor_id
+ */
+service StorageService {
+  rpc SaveReading(SensorReading) returns (Response);
+  rpc GetHistory(SensorRequest) returns (SensorHistory);
+}
+// message formats
+
+message SensorRequest {
+  string sensor_id = 1;
+}
+
+message SensorReading {
+  string sensor_id = 1;
+  string reading_type = 2;
+  float reading_value = 3;
+  string timestamp = 4;
+}
+
+// repeats SensorReading
+message SensorHistory {
+  repeated SensorReading history = 1;
+}
+
+message Response {
+string status = 1;
+}
