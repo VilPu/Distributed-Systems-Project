@@ -16,6 +16,19 @@ services:
     build: ./alert
     ports:
       - "5052:5052"
+  storage-service:
+    build: ./storage
+    ports:
+      - "5051:5051"
+    depends_on:
+      - mongo-db
+  mongo-db:
+    image: mongo
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - data:/data
   sensor-1:
     build: ./sensor
     depends_on:
@@ -26,3 +39,5 @@ services:
     depends_on:
       sensor-manager:
         condition: service_started
+volumes:
+  data:
