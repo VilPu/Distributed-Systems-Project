@@ -18,12 +18,12 @@ def save_reading(storage_service_ip, sensor: Sensor):
         with grpc.insecure_channel(storage_service_ip + ":5051") as channel:
             stub = sensors_pb2_grpc.StorageServiceStub(channel)
 
-            SensorReading = sensors_pb2.SensorReading()
-            SensorReading.sensor_id=sensor.sensor_id,
-            SensorReading.reading_type=sensor.reading_type,
-            SensorReading.reading_value=sensor.reading_value,
-            SensorReading.timestamp=sensor.timestamp
-            
+            SensorReading = sensors_pb2.SensorReading(
+                sensor_id=sensor.sensor_id,
+                reading_type=sensor.reading_type,
+                reading_value=sensor.reading_value,
+                timestamp=sensor.timestamp
+            )            
             response = stub.SaveReading(SensorReading)
     except Exception as error:
         logging.error(f"{sensor.sensor_id}: failed to save reading ({type(error).__name__})")
@@ -31,15 +31,42 @@ def save_reading(storage_service_ip, sensor: Sensor):
         return False
     return response.status == "200"
 
+def check_reading(alert_service_ip, sensor: Sensor):
+    logging.info(f"{sensor.sensor_id}: checking reading...")
+    response = None
+    try:
+        with grpc.insecure_channel(alert_service_ip + ":5052") as channel:
+            stub = sensors_pb2_grpc.AlertServiceStub(channel)
+
+            SensorReading = sensors_pb2.SensorReading(
+                sensor_id=sensor.sensor_id, 
+                reading_type=sensor.reading_type, 
+                reading_value=sensor.reading_value, 
+                timestamp=sensor.timestamp
+            )
+            response = stub.CheckAlert(SensorReading)
+            
+    except Exception as error:
+        logging.error(f"{sensor.sensor_id}: failed to check reading ({type(error).__name__})")
+
+    if response is None:
+        return
+    if response.triggered:
+        logging.warning(f"{sensor.sensor_id}: ALERT TRIGGERED ({response.alert_message})")
+        return
+    logging.info(f"{sensor.sensor_id}: {response.alert_message}")
+    return
 
 class SensorManager():
     
     storage_service_ip = os.environ.get("STORAGE_SERVICE_IP", "127.0.0.1")
+    alert_service_ip = os.environ.get("ASIP", "127.0.0.1")
     sensors: dict[str, Sensor] = {}
 
     def PushReading(self, request, context):
         received = Sensor(request.sensor_id, request.reading_type, request.reading_value, request.timestamp)
         logging.info(f"{received.sensor_id}: data received ({received.reading_type} {received.reading_value} @ {received.timestamp})")
+        check_reading(self.alert_service_ip, received)
         with lock:
             self.sensors.update({received.sensor_id: received})
         if save_reading(self.storage_service_ip, received): # if persisted

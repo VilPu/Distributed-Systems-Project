@@ -10,5 +10,5 @@ sensors_stub = sensors_pb2_grpc.SensorManagerStub(sensor_channel)
 storage_channel = grpc.insecure_channel('storage-service:5051')
 storage_stub = sensors_pb2_grpc.StorageServiceStub(storage_channel)
 # alert service
-alert_channel = grpc.insecure_channel('alert-service:5052')
+alert_channel = grpc.insecure_channel('alerting-service:5052')
 alerts_stub = sensors_pb2_grpc.AlertServiceStub(alert_channel)
